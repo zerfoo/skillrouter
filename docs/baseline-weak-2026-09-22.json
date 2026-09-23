@@ -1,0 +1,10 @@
+{
+  "corpus_sha256": "b89686088e21df7848ab44c7f88bd5bc396cee099fd209f45cf464e63cab293f",
+  "documents": 6712,
+  "queries": 672,
+  "query_source": "skill frontmatter descriptions (weak labels)",
+  "retriever": "BM25 over skill body, excluding frontmatter",
+  "recall_at_1": 0.8482142857142857,
+  "recall_at_5": 0.9404761904761905,
+  "recall_at_10": 0.9568452380952381
+}
