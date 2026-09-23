@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from collect import collect, eligible_listing, existing_keys, load_oidc_token, skill_markdown
+from collect import ResponseTooLarge, collect, eligible_listing, existing_keys, fetch_skill, load_oidc_token, skill_markdown
 
 
 class CollectorSelectionTests(unittest.TestCase):
@@ -56,6 +56,11 @@ class CollectorSelectionTests(unittest.TestCase):
         self.assertEqual(skill_markdown({"files": [{"path": "SKILL.md", "contents": "  instructions  "}]}), "instructions")
         self.assertIsNone(skill_markdown({"files": [{"path": "notes/SKILL.md", "contents": "wrong"}]}))
         self.assertIsNone(skill_markdown({"files": None}))
+
+    def test_oversized_detail_does_not_abort_collection(self):
+        item = {"id": "owner/repo/large"}
+        with patch("collect.get_json", side_effect=ResponseTooLarge("oversized")), patch("collect.time.sleep"):
+            self.assertEqual(fetch_skill(item, "sample-token"), (item, None))
 
 
 if __name__ == "__main__":

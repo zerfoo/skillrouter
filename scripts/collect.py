@@ -26,6 +26,10 @@ ALLOWED_LICENSES = {"MIT", "Apache-2.0"}
 MAX_RESPONSE = 12 * 1024 * 1024
 
 
+class ResponseTooLarge(ValueError):
+    pass
+
+
 def get_json(url: str, token: str, *, github: bool = False) -> dict | None:
     headers = {
         "Accept": "application/vnd.github+json" if github else "application/json",
@@ -38,7 +42,7 @@ def get_json(url: str, token: str, *, github: bool = False) -> dict | None:
             with urllib.request.urlopen(request, timeout=30) as response:
                 raw = response.read(MAX_RESPONSE + 1)
                 if len(raw) > MAX_RESPONSE:
-                    raise ValueError(f"response too large: {url}")
+                    raise ResponseTooLarge(f"response too large: {url}")
                 value = json.loads(raw)
                 if not isinstance(value, dict):
                     raise ValueError(f"expected JSON object: {url}")
@@ -111,7 +115,11 @@ def fetch_skill(item: dict, skills_token: str) -> tuple[dict, str | None]:
     # documented 600/minute authenticated limit even on fast connections.
     time.sleep(0.7)
     detail_url = f"{SKILLS_API}/{urllib.parse.quote(item['id'], safe='/')}"
-    return item, skill_markdown(get_json(detail_url, skills_token))
+    try:
+        return item, skill_markdown(get_json(detail_url, skills_token))
+    except ResponseTooLarge:
+        print(f"skipping oversized detail: {item['id']}", file=sys.stderr)
+        return item, None
 
 
 def collect(limit: int, output: Path, skills_token: str, github_token: str) -> None:
