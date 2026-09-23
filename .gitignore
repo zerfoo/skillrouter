@@ -7,3 +7,6 @@ __pycache__/
 .pytest_cache/
 *.pyc
 ajent.social
+
+# Local Vercel project link
+.vercel/
