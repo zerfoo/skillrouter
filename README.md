@@ -36,6 +36,40 @@ See [dataset policy](docs/dataset-policy.md).
 The agent-facing "one skill" is a discovery instruction that calls search and
 fetch. It is not baked into Zerfoo's generic package.
 
+## Native Go inference parity
+
+The [frozen reference fixture](tests/fixtures/reference-vectors-weak-v1.json)
+contains exact token IDs and normalized vectors for one probe, four task queries,
+and eight candidate descriptions. It was generated on DGX Spark from the merged
+BF16 experimental checkpoint with
+[`scripts/reference_vectors.py`](scripts/reference_vectors.py). The fixture is
+for numerical interoperability; its short, hand-written strings do not measure
+retrieval quality on the skills.sh catalog.
+
+Zerfoo's contextual GGUF loader now accepts the official Qwen3-Embedding-0.6B
+F16 GGUF plus a GGUF conversion of the released PEFT adapter. The CPU parity
+run matched all 13 token sequences, achieved minimum vector cosine 0.9998455
+and maximum component error 0.0030001, and matched the top document for all
+four queries. A native Go CUDA run on DGX Spark also matched all token IDs
+and four top choices, with minimum cosine 0.9998456 and maximum component
+error 0.0029999. Minor lower-rank differences remain. The reference and runtime
+use BF16 and F16 base weights respectively, so exact vector equality is not
+expected. The [Go implementation plan](https://github.com/zerfoo/zerfoo/blob/feat/contextual-embedding-go/docs/plan-contextual-embedding-go.md)
+tracks GPU parity and native training separately.
+
+Reproduce with the pinned official GGUF and the released adapter:
+
+```sh
+go run ./cmd/convert-peft-adapter -help
+go run ./cmd/embedding-parity -help
+```
+
+These commands are in Zerfoo; use the converter to produce a GGUF adapter and
+then give the parity command the base GGUF, adapter GGUF, and fixture paths.
+SHA-256: base F16 GGUF `421a27e58d165478cc7acb984a688c2aa41404968b0203e7cd743ece44c54340`;
+converted GGUF adapter `83bcde11f2e38d1c1be9ea60e8ae92a7e90d5d32322370ff5ad92ea7b3422cb7`;
+reference fixture `13ed3b0e81baea9c880a2da915760487fc748c639f33e1c6818df86b064881e2`.
+
 ## Link a Vercel project
 
 From this repository, link an existing Vercel project that has OIDC federation
