@@ -31,11 +31,26 @@ licenses. See [dataset policy](docs/dataset-policy.md).
 The agent-facing "one skill" is a discovery instruction that calls search and
 fetch. It is not baked into Zerfoo's generic package.
 
+## Link a Vercel project
+
+From this repository, link an existing Vercel project that has OIDC federation
+enabled under **Settings → Security**. The link is local and ignored by Git:
+
+```sh
+npx vercel link
+npx vercel env pull .env.local
+```
+
+The collector reads the ignored `.env.local` token automatically. It uses
+`GITHUB_TOKEN` or the local `gh` login for source license checks. Do not paste
+credentials into chat or commit `.env.local`. A long collection may outlast a
+static token; the collector is resumable and can be restarted after refreshing
+the token. The OIDC helper integration for automatic refresh is
+planned before a full 100,000-record run.
+
 ## Collecting a snapshot
 
 ```sh
-export VERCEL_OIDC_TOKEN=...  # linked Vercel project; never commit
-export GITHUB_TOKEN=...       # GitHub token for source license verification
 python3 scripts/collect.py --limit 100000 --output data/skills.jsonl
 ```
 

@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import subprocess
 import sys
 import time
 import urllib.error
@@ -162,6 +163,27 @@ def collect(limit: int, output: Path, skills_token: str, github_token: str) -> N
     print(json.dumps({"records": count, "sha256": corpus_digest, "output": str(output)}))
 
 
+def load_oidc_token(path: Path = Path(".env.local")) -> str | None:
+    """Read the linked project's local token without printing it."""
+    if not path.exists():
+        return None
+    for line in path.read_text().splitlines():
+        if line.startswith("VERCEL_OIDC_TOKEN="):
+            return line.partition("=")[2].strip().strip('"').strip("'") or None
+    return None
+
+
+def load_github_token() -> str | None:
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        return token
+    try:
+        result = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, check=True)
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return result.stdout.strip() or None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=100_000)
@@ -169,8 +191,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.limit <= 0:
         parser.error("--limit must be positive")
-    skills_token = os.environ.get("VERCEL_OIDC_TOKEN")
-    github_token = os.environ.get("GITHUB_TOKEN")
+    skills_token = os.environ.get("VERCEL_OIDC_TOKEN") or load_oidc_token()
+    github_token = load_github_token()
     if not skills_token or not github_token:
         parser.error("VERCEL_OIDC_TOKEN and GITHUB_TOKEN are required")
     collect(args.limit, args.output, skills_token, github_token)

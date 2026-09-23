@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from collect import collect, eligible_listing, existing_keys, skill_markdown
+from collect import collect, eligible_listing, existing_keys, load_oidc_token, skill_markdown
 
 
 class CollectorSelectionTests(unittest.TestCase):
@@ -16,6 +16,12 @@ class CollectorSelectionTests(unittest.TestCase):
         self.assertFalse(eligible_listing({**row, "isDuplicate": True}))
         self.assertFalse(eligible_listing({**row, "sourceType": "well-known"}))
         self.assertFalse(eligible_listing({**row, "id": "wrong/repo/example"}))
+
+    def test_reads_local_oidc_without_exposing_it(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".env.local"
+            path.write_text('VERCEL_OIDC_TOKEN="sample.jwt.value"\n')
+            self.assertEqual(load_oidc_token(path), "sample.jwt.value")
 
     def test_resume_loads_ids_and_content_hashes(self):
         with tempfile.TemporaryDirectory() as directory:
