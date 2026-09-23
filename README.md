@@ -53,6 +53,7 @@ the token.
 ```sh
 python3 scripts/collect.py --limit 100000 --output data/skills.jsonl
 python3 scripts/summarize.py data/skills.jsonl
+python3 scripts/split.py data/skills.jsonl
 ```
 
 Collection is resumable. It stores records only for GitHub sources with an
