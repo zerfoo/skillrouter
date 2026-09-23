@@ -1,8 +1,9 @@
 # Dataset policy
 
-The first run selects up to 100,000 eligible records from the skills.sh
-all-time ranking, in rank order. The count is a ceiling, not a promise that
-100,000 eligible items exist. A record is eligible only when:
+The collector can select up to 100,000 eligible records from the skills.sh
+all-time ranking, in rank order. The authenticated API reported 9,829 total
+listings on 2026-09-22, so the reachable corpus is smaller than the configured
+ceiling. A record is eligible only when:
 
 - skills.sh marks it as a GitHub source and does not flag it as a duplicate;
 - a `SKILL.md` snapshot exists and has nonempty content;

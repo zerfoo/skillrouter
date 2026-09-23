@@ -16,6 +16,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -105,6 +106,14 @@ def repository_license(source: str, github_token: str, cache: dict[str, str | No
     return cache[source]
 
 
+def fetch_skill(item: dict, skills_token: str) -> tuple[dict, str | None]:
+    # Six workers with a per-request pause keep detail reads below the
+    # documented 600/minute authenticated limit even on fast connections.
+    time.sleep(0.7)
+    detail_url = f"{SKILLS_API}/{urllib.parse.quote(item['id'], safe='/')}"
+    return item, skill_markdown(get_json(detail_url, skills_token))
+
+
 def collect(limit: int, output: Path, skills_token: str, github_token: str) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     cache_path = output.with_suffix(".licenses.json")
@@ -121,34 +130,31 @@ def collect(limit: int, output: Path, skills_token: str, github_token: str) -> N
             rows = listing["data"]
             if not rows:
                 break
+            candidates = []
             for item in rows:
-                if count >= limit:
-                    break
-                if not eligible_listing(item) or item["id"] in seen:
-                    continue
-                source = item["source"]
-                license_id = repository_license(source, github_token, licenses)
-                if license_id not in ALLOWED_LICENSES:
-                    continue
-                detail_url = f"{SKILLS_API}/{urllib.parse.quote(item['id'], safe='/')}"
-                detail = get_json(detail_url, skills_token)
-                content = skill_markdown(detail)
-                if content is None:
-                    continue
-                digest = hashlib.sha256(content.encode()).hexdigest()
-                if digest in seen_hashes:
-                    continue
-                row = {
-                    "id": item["id"], "source": source,
-                    "name": item.get("name", ""), "installs": item.get("installs", 0),
-                    "license": license_id, "skill_sha256": digest,
-                    "collected_at": datetime.now(timezone.utc).isoformat(),
-                    "skill_md": content,
-                }
-                stream.write(json.dumps(row, ensure_ascii=False) + "\n")
-                seen.add(item["id"])
-                seen_hashes.add(digest)
-                count += 1
+                if eligible_listing(item) and item["id"] not in seen:
+                    if repository_license(item["source"], github_token, licenses) in ALLOWED_LICENSES:
+                        candidates.append(item)
+            with ThreadPoolExecutor(max_workers=6) as pool:
+                for item, content in pool.map(lambda candidate: fetch_skill(candidate, skills_token), candidates):
+                    if count >= limit:
+                        break
+                    if content is None:
+                        continue
+                    digest = hashlib.sha256(content.encode()).hexdigest()
+                    if digest in seen_hashes:
+                        continue
+                    row = {
+                        "id": item["id"], "source": item["source"],
+                        "name": item.get("name", ""), "installs": item.get("installs", 0),
+                        "license": licenses[item["source"]], "skill_sha256": digest,
+                        "collected_at": datetime.now(timezone.utc).isoformat(),
+                        "skill_md": content,
+                    }
+                    stream.write(json.dumps(row, ensure_ascii=False) + "\n")
+                    seen.add(item["id"])
+                    seen_hashes.add(digest)
+                    count += 1
             stream.flush()
             cache_path.write_text(json.dumps(licenses, sort_keys=True))
             print(f"page={page} eligible={count} listed_total={listing.get('pagination', {}).get('total', '?')}", file=sys.stderr)

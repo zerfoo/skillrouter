@@ -6,16 +6,17 @@ training loss, and retrieval APIs generic for other Go applications.
 
 ## Status
 
-**Dataset collection and model training have not run yet. No weights have been
-released.** The first target is up to 100,000 distinct, licensed skills from
-the skills.sh all-time catalog, selected by install rank. The public leaderboard
-currently reports roughly 1.52 million entries; this is a catalog count, not a
-count of usable, licensed training examples.
+**Model training has not run yet. No weights have been released.** The first
+target is the available skills.sh all-time catalog, selected by install rank.
+On 2026-09-22, the authenticated paginated API reported 9,829 listings; this
+is the upper bound for this collection path, before license and content filters.
+The much larger number displayed on the public leaderboard is not the API's
+paginated listing count.
 
-The documented skills.sh catalog API requires a Vercel OIDC token. This machine
-does not currently have one. The collection command fails before network access
-when it is absent. It also requires a GitHub token to verify source repository
-licenses. See [dataset policy](docs/dataset-policy.md).
+The documented skills.sh catalog API requires a Vercel OIDC token. The local
+Vercel project link supplies one through an ignored `.env.local` file. The
+collector also requires a GitHub token to verify source repository licenses.
+See [dataset policy](docs/dataset-policy.md).
 
 ## Intended system
 
@@ -45,8 +46,7 @@ The collector reads the ignored `.env.local` token automatically. It uses
 `GITHUB_TOKEN` or the local `gh` login for source license checks. Do not paste
 credentials into chat or commit `.env.local`. A long collection may outlast a
 static token; the collector is resumable and can be restarted after refreshing
-the token. The OIDC helper integration for automatic refresh is
-planned before a full 100,000-record run.
+the token.
 
 ## Collecting a snapshot
 
