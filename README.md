@@ -55,9 +55,14 @@ the token.
 python3 scripts/collect.py --limit 100000 --output data/skills.jsonl
 python3 scripts/summarize.py data/skills.jsonl
 python3 scripts/split.py data/skills.jsonl
+python3 scripts/prepare_training.py
 ```
 
 Collection is resumable. It stores records only for GitHub sources with an
 explicit MIT or Apache-2.0 repository license, a non-duplicate skills.sh ID,
 and a nonempty `SKILL.md` snapshot. The corpus file is ignored by Git and must
 be reviewed before any redistribution. Collection is not training.
+
+`prepare_training.py` creates weak description-to-body pairs for an initial
+experiment. These descriptions come from the skills themselves; evaluation on
+those pairs must not be presented as performance on independent user requests.
