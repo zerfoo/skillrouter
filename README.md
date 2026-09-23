@@ -50,7 +50,9 @@ Zerfoo's contextual GGUF loader now accepts the official Qwen3-Embedding-0.6B
 F16 GGUF plus a GGUF conversion of the released PEFT adapter. The CPU parity
 run matched all 13 token sequences, achieved minimum vector cosine 0.9998455
 and maximum component error 0.0030001, and matched the top document for all
-four queries. Minor lower-rank differences remain. The reference and runtime
+four queries. A native Go CUDA run on DGX Spark also matched all token IDs
+and four top choices, with minimum cosine 0.9998456 and maximum component
+error 0.0029999. Minor lower-rank differences remain. The reference and runtime
 use BF16 and F16 base weights respectively, so exact vector equality is not
 expected. The [Go implementation plan](https://github.com/zerfoo/zerfoo/blob/feat/contextual-embedding-go/docs/plan-contextual-embedding-go.md)
 tracks GPU parity and native training separately.
