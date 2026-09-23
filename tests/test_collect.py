@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from collect import HTTPStatusError, ResponseTooLarge, collect, eligible_listing, existing_keys, fetch_skill, load_oidc_token, skill_markdown
+from collect import HTTPStatusError, ResponseTooLarge, collect, eligible_listing, existing_keys, fetch_skill, load_oidc_token, repository_license, skill_markdown
 
 
 class CollectorSelectionTests(unittest.TestCase):
@@ -69,6 +69,12 @@ class CollectorSelectionTests(unittest.TestCase):
         with patch("collect.time.sleep"), patch("collect.get_json", side_effect=HTTPStatusError(401, "url")):
             with self.assertRaises(HTTPStatusError):
                 fetch_skill(item, "sample-token")
+
+    def test_legally_unavailable_repository_has_no_eligible_license(self):
+        with patch("collect.get_json", side_effect=HTTPStatusError(451, "url")):
+            cache = {}
+            self.assertIsNone(repository_license("owner/repo", "sample-token", cache))
+            self.assertIn("owner/repo", cache)
 
 
 if __name__ == "__main__":

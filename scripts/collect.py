@@ -110,7 +110,12 @@ def repository_license(source: str, github_token: str, cache: dict[str, str | No
     if source not in cache:
         owner, repo = source.split("/")
         url = f"{GITHUB_API}/{urllib.parse.quote(owner)}/{urllib.parse.quote(repo)}/license"
-        result = get_json(url, github_token, github=True)
+        try:
+            result = get_json(url, github_token, github=True)
+        except HTTPStatusError as error:
+            if error.code != 451:
+                raise
+            result = None
         license_object = result.get("license") if result else None
         cache[source] = license_object.get("spdx_id") if isinstance(license_object, dict) else None
     return cache[source]
