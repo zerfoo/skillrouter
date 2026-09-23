@@ -1,0 +1,45 @@
+# Skillrouter
+
+Skillrouter is the open-weights skill-selection model built with Zerfoo. Its
+model, data recipes, and evaluation live here; Zerfoo itself keeps the encoder,
+training loss, and retrieval APIs generic for other Go applications.
+
+## Status
+
+**Dataset collection and model training have not run yet. No weights have been
+released.** The first target is up to 100,000 distinct, licensed skills from
+the skills.sh all-time catalog, selected by install rank. The public leaderboard
+currently reports roughly 1.52 million entries; this is a catalog count, not a
+count of usable, licensed training examples.
+
+The documented skills.sh catalog API requires a Vercel OIDC token. This machine
+does not currently have one. The collection command fails before network access
+when it is absent. It also requires a GitHub token to verify source repository
+licenses. See [dataset policy](docs/dataset-policy.md).
+
+## Intended system
+
+1. Build a reproducible corpus snapshot of licensed `SKILL.md` files.
+2. Create task-to-skill relevance labels, including hard negatives, multi-skill
+   requests, and requests for which no skill should be chosen.
+3. Establish BM25 and pretrained-encoder baselines on held-out sources.
+4. Train a contextual bi-encoder with Zerfoo's generic contrastive training
+   primitives. Add a reranker only if measured retrieval errors justify it.
+5. Publish versioned weights, tokenizer, model card, evaluation report, and a
+   small Go example that loads the artifact through Zerfoo.
+
+The agent-facing "one skill" is a discovery instruction that calls search and
+fetch. It is not baked into Zerfoo's generic package.
+
+## Collecting a snapshot
+
+```sh
+export VERCEL_OIDC_TOKEN=...  # linked Vercel project; never commit
+export GITHUB_TOKEN=...       # GitHub token for source license verification
+python3 scripts/collect.py --limit 100000 --output data/skills.jsonl
+```
+
+Collection is resumable. It stores records only for GitHub sources with an
+explicit MIT or Apache-2.0 repository license, a non-duplicate skills.sh ID,
+and a nonempty `SKILL.md` snapshot. The corpus file is ignored by Git and must
+be reviewed before any redistribution. Collection is not training.

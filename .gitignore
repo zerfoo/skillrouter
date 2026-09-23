@@ -1,0 +1,9 @@
+# Training corpora and model artifacts are fetched or built locally.
+data/
+checkpoints/
+outputs/
+.env*
+__pycache__/
+.pytest_cache/
+*.pyc
+ajent.social
