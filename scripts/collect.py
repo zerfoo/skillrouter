@@ -78,17 +78,20 @@ def skill_markdown(detail: dict | None) -> str | None:
     return None
 
 
-def existing_ids(path: Path) -> set[str]:
-    found: set[str] = set()
+def existing_keys(path: Path) -> tuple[set[str], set[str]]:
+    ids: set[str] = set()
+    hashes: set[str] = set()
     if not path.exists():
-        return found
+        return ids, hashes
     with path.open(encoding="utf-8") as stream:
         for line_number, line in enumerate(stream, 1):
             try:
-                found.add(json.loads(line)["id"])
+                record = json.loads(line)
+                ids.add(record["id"])
+                hashes.add(record["skill_sha256"])
             except (ValueError, KeyError) as error:
                 raise ValueError(f"invalid corpus line {line_number}") from error
-    return found
+    return ids, hashes
 
 
 def repository_license(source: str, github_token: str, cache: dict[str, str | None]) -> str | None:
@@ -105,7 +108,7 @@ def collect(limit: int, output: Path, skills_token: str, github_token: str) -> N
     output.parent.mkdir(parents=True, exist_ok=True)
     cache_path = output.with_suffix(".licenses.json")
     licenses = json.loads(cache_path.read_text()) if cache_path.exists() else {}
-    seen = existing_ids(output)
+    seen, seen_hashes = existing_keys(output)
     count = len(seen)
     page = 0
     with output.open("a", encoding="utf-8") as stream:
@@ -132,6 +135,8 @@ def collect(limit: int, output: Path, skills_token: str, github_token: str) -> N
                 if content is None:
                     continue
                 digest = hashlib.sha256(content.encode()).hexdigest()
+                if digest in seen_hashes:
+                    continue
                 row = {
                     "id": item["id"], "source": source,
                     "name": item.get("name", ""), "installs": item.get("installs", 0),
@@ -141,6 +146,7 @@ def collect(limit: int, output: Path, skills_token: str, github_token: str) -> N
                 }
                 stream.write(json.dumps(row, ensure_ascii=False) + "\n")
                 seen.add(item["id"])
+                seen_hashes.add(digest)
                 count += 1
             stream.flush()
             cache_path.write_text(json.dumps(licenses, sort_keys=True))
