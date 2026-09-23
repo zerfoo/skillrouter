@@ -6,8 +6,11 @@ training loss, and retrieval APIs generic for other Go applications.
 
 ## Status
 
-**The first corpus snapshot is complete. Model training has not run yet and no
-weights have been released.** On 2026-09-22, the authenticated skills.sh API
+**The first corpus snapshot and an experimental open-weight adapter are
+available.** [v0.1.0-experimental](https://github.com/zerfoo/skillrouter/releases/tag/v0.1.0-experimental)
+contains a Qwen3-Embedding-0.6B LoRA adapter. Its
+[model card](MODEL_CARD.md) reports a weak-label benchmark and the remaining
+validation needed before stable use. On 2026-09-22, the authenticated skills.sh API
 reported 9,829 listings. License, duplicate, and content checks retained 6,775
 skills from 726 repositories. The [snapshot manifest](docs/snapshot-2026-09-22.json)
 records the corpus hash, license totals, and source-disjoint split counts.

@@ -1,0 +1,19 @@
+{
+  "status": "experimental prerelease",
+  "release": "v0.1.0-experimental",
+  "base_model": "Qwen/Qwen3-Embedding-0.6B",
+  "base_revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+  "corpus_sha256": "b89686088e21df7848ab44c7f88bd5bc396cee099fd209f45cf464e63cab293f",
+  "train_pairs": 5363,
+  "validation_pairs": 677,
+  "test_queries": 672,
+  "adapter_sha256": "e6c5eef63d363b200a3f0be96d1a832c2a4b8800eb3ebfba3022bf6761e966a8",
+  "archive_sha256": "dbfa4ad9cc0ab89ca5689ae2c4018aef068eb30eba1fc626b396ceb43130257a",
+  "scores": {
+    "bm25": {"recall_at_1": 0.8482142857142857, "recall_at_5": 0.9404761904761905, "recall_at_10": 0.9568452380952381},
+    "frozen_qwen3": {"recall_at_1": 0.7157738095238095, "recall_at_5": 0.8735119047619048, "recall_at_10": 0.9047619047619048},
+    "finetuned_qwen3": {"recall_at_1": 0.875, "recall_at_5": 0.9538690476190477, "recall_at_10": 0.9672619047619048}
+  },
+  "evaluation_limit": "queries are skill descriptions, not independent user requests",
+  "native_go_parity": "pending"
+}
