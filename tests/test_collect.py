@@ -69,6 +69,8 @@ class CollectorSelectionTests(unittest.TestCase):
         with patch("collect.time.sleep"), patch("collect.get_json", side_effect=HTTPStatusError(401, "url")):
             with self.assertRaises(HTTPStatusError):
                 fetch_skill(item, "sample-token")
+        with patch("collect.time.sleep"), patch("collect.get_json", side_effect=HTTPStatusError(500, "url")):
+            self.assertEqual(fetch_skill(item, "sample-token"), (item, None))
 
     def test_legally_unavailable_repository_has_no_eligible_license(self):
         with patch("collect.get_json", side_effect=HTTPStatusError(451, "url")):

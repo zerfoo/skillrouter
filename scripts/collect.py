@@ -56,9 +56,9 @@ def get_json(url: str, token: str, *, github: bool = False) -> dict | None:
         except urllib.error.HTTPError as error:
             if error.code == 404:
                 return None
-            if error.code not in {429, 503} or attempt == 4:
+            if error.code not in {429, 500, 502, 503, 504} or attempt == 4:
                 raise HTTPStatusError(error.code, url) from error
-            delay = min(60, int(error.headers.get("Retry-After", "1")))
+            delay = min(60, int(error.headers.get("Retry-After", str(2**attempt))))
             time.sleep(max(1, delay))
         except (TimeoutError, urllib.error.URLError) as error:
             if attempt == 4:
@@ -129,7 +129,7 @@ def fetch_skill(item: dict, skills_token: str) -> tuple[dict, str | None]:
     try:
         return item, skill_markdown(get_json(detail_url, skills_token))
     except (ResponseTooLarge, HTTPStatusError) as error:
-        if isinstance(error, HTTPStatusError) and error.code != 400:
+        if isinstance(error, HTTPStatusError) and error.code not in {400, 500, 502, 503, 504}:
             raise
         print(f"skipping unavailable detail: {item['id']} ({error})", file=sys.stderr)
         return item, None
