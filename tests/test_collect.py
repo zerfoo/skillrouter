@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from collect import ResponseTooLarge, collect, eligible_listing, existing_keys, fetch_skill, load_oidc_token, skill_markdown
+from collect import HTTPStatusError, ResponseTooLarge, collect, eligible_listing, existing_keys, fetch_skill, load_oidc_token, skill_markdown
 
 
 class CollectorSelectionTests(unittest.TestCase):
@@ -61,6 +61,14 @@ class CollectorSelectionTests(unittest.TestCase):
         item = {"id": "owner/repo/large"}
         with patch("collect.get_json", side_effect=ResponseTooLarge("oversized")), patch("collect.time.sleep"):
             self.assertEqual(fetch_skill(item, "sample-token"), (item, None))
+
+    def test_bad_detail_request_is_skipped_but_auth_error_is_fatal(self):
+        item = {"id": "owner/repo/bad"}
+        with patch("collect.time.sleep"), patch("collect.get_json", side_effect=HTTPStatusError(400, "url")):
+            self.assertEqual(fetch_skill(item, "sample-token"), (item, None))
+        with patch("collect.time.sleep"), patch("collect.get_json", side_effect=HTTPStatusError(401, "url")):
+            with self.assertRaises(HTTPStatusError):
+                fetch_skill(item, "sample-token")
 
 
 if __name__ == "__main__":

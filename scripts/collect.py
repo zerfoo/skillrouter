@@ -30,6 +30,12 @@ class ResponseTooLarge(ValueError):
     pass
 
 
+class HTTPStatusError(RuntimeError):
+    def __init__(self, code: int, url: str):
+        self.code = code
+        super().__init__(f"HTTP {code} from {url}")
+
+
 def get_json(url: str, token: str, *, github: bool = False) -> dict | None:
     headers = {
         "Accept": "application/vnd.github+json" if github else "application/json",
@@ -51,7 +57,7 @@ def get_json(url: str, token: str, *, github: bool = False) -> dict | None:
             if error.code == 404:
                 return None
             if error.code not in {429, 503} or attempt == 4:
-                raise RuntimeError(f"HTTP {error.code} from {url}") from error
+                raise HTTPStatusError(error.code, url) from error
             delay = min(60, int(error.headers.get("Retry-After", "1")))
             time.sleep(max(1, delay))
         except (TimeoutError, urllib.error.URLError) as error:
@@ -117,8 +123,10 @@ def fetch_skill(item: dict, skills_token: str) -> tuple[dict, str | None]:
     detail_url = f"{SKILLS_API}/{urllib.parse.quote(item['id'], safe='/')}"
     try:
         return item, skill_markdown(get_json(detail_url, skills_token))
-    except ResponseTooLarge:
-        print(f"skipping oversized detail: {item['id']}", file=sys.stderr)
+    except (ResponseTooLarge, HTTPStatusError) as error:
+        if isinstance(error, HTTPStatusError) and error.code != 400:
+            raise
+        print(f"skipping unavailable detail: {item['id']} ({error})", file=sys.stderr)
         return item, None
 
 
