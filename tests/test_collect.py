@@ -1,11 +1,12 @@
 import sys
 import tempfile
 import json
+from unittest.mock import patch
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from collect import eligible_listing, existing_keys, skill_markdown
+from collect import collect, eligible_listing, existing_keys, skill_markdown
 
 
 class CollectorSelectionTests(unittest.TestCase):
@@ -21,6 +22,29 @@ class CollectorSelectionTests(unittest.TestCase):
             path = Path(directory) / "skills.jsonl"
             path.write_text(json.dumps({"id": "owner/repo/skill", "skill_sha256": "abc"}) + "\n")
             self.assertEqual(existing_keys(path), ({"owner/repo/skill"}, {"abc"}))
+
+    def test_collection_filters_license_and_duplicate_content(self):
+        rows = [
+            {"id": "a/repo/one", "source": "a/repo", "sourceType": "github", "name": "one", "installs": 10},
+            {"id": "a/repo/copy", "source": "a/repo", "sourceType": "github", "name": "copy", "installs": 9},
+            {"id": "b/repo/two", "source": "b/repo", "sourceType": "github", "name": "two", "installs": 8},
+        ]
+        def fake_get(url, token, *, github=False):
+            if "page=0" in url:
+                return {"data": rows, "pagination": {"total": 3, "hasMore": False}}
+            if url.endswith("a/repo/license"):
+                return {"license": {"spdx_id": "MIT"}}
+            if url.endswith("b/repo/license"):
+                return {"license": {"spdx_id": "GPL-3.0"}}
+            if url.endswith("a/repo/one") or url.endswith("a/repo/copy"):
+                return {"files": [{"path": "SKILL.md", "contents": "same content"}]}
+            raise AssertionError(url)
+        with tempfile.TemporaryDirectory() as directory, patch("collect.get_json", side_effect=fake_get):
+            path = Path(directory) / "skills.jsonl"
+            collect(10, path, "sample-token", "sample-github-token")
+            records = [json.loads(line) for line in path.read_text().splitlines()]
+            self.assertEqual([item["id"] for item in records], ["a/repo/one"])
+            self.assertEqual(records[0]["license"], "MIT")
 
     def test_extracts_only_nonempty_root_skill_markdown(self):
         self.assertEqual(skill_markdown({"files": [{"path": "SKILL.md", "contents": "  instructions  "}]}), "instructions")
