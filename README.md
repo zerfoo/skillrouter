@@ -6,11 +6,12 @@ training loss, and retrieval APIs generic for other Go applications.
 
 ## Status
 
-**Model training has not run yet. No weights have been released.** The first
-target is the available skills.sh all-time catalog, selected by install rank.
-On 2026-09-22, the authenticated paginated API reported 9,829 listings; this
-is the upper bound for this collection path, before license and content filters.
-The much larger number displayed on the public leaderboard is not the API's
+**The first corpus snapshot is complete. Model training has not run yet and no
+weights have been released.** On 2026-09-22, the authenticated skills.sh API
+reported 9,829 listings. License, duplicate, and content checks retained 6,775
+skills from 726 repositories. The [snapshot manifest](docs/snapshot-2026-09-22.json)
+records the corpus hash, license totals, and source-disjoint split counts.
+The larger number displayed on the public leaderboard is not the API's
 paginated listing count.
 
 The documented skills.sh catalog API requires a Vercel OIDC token. The local

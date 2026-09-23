@@ -1,0 +1,18 @@
+{
+  "source": "skills.sh authenticated all-time API",
+  "collected_date": "2026-09-22",
+  "listed_total": 9829,
+  "records": 6775,
+  "sources": 726,
+  "licenses": {
+    "Apache-2.0": 2129,
+    "MIT": 4646
+  },
+  "sha256": "b89686088e21df7848ab44c7f88bd5bc396cee099fd209f45cf464e63cab293f",
+  "split": {
+    "seed": "skillrouter-v1",
+    "train": 5419,
+    "validation": 678,
+    "test": 678
+  }
+}
